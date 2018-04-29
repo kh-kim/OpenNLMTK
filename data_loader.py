@@ -46,10 +46,6 @@ class DataLoader():
 class LanguageModelDataset(data.Dataset):
     """Defines a dataset for machine translation."""
 
-    @staticmethod
-    def sort_key(ex):
-        return data.interleave_keys(len(ex.src), len(ex.trg))
-
     def __init__(self, path, fields, max_length=None, **kwargs):
         if not isinstance(fields[0], (tuple, list)):
             fields = [('text', fields[0])]
