@@ -20,6 +20,7 @@ def define_argparser():
     p.add_argument('-n_epochs', type = int, default = 20)
     p.add_argument('-print_every', type = int, default = 10)
     p.add_argument('-early_stop', type = int, default = 3)
+    p.add_argument('-iter_ratio_in_epoch', type = float, default = 1.)
     
     p.add_argument('-dropout', type = float, default = .1)
     p.add_argument('-word_vec_dim', type = int, default = 256)
