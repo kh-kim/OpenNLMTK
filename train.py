@@ -30,6 +30,7 @@ def define_argparser():
     p.add_argument('-n_layers', type = int, default = 4)
     p.add_argument('-max_grad_norm', type = float, default = 5.)
     p.add_argument('-lr', type = float, default = 1.)
+    p.add_argument('-min_lr', type = float, default = .000001)
     
     config = p.parse_args()
 
