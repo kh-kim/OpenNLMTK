@@ -61,6 +61,10 @@ if __name__ == '__main__':
     print(model)
     print(criterion)
 
+    if config.gpu_id >= 0:
+        model.cuda(config.gpu_id)
+        criterion.cuda(config.gpu_id)
+
     trainer.train_epoch(model, 
                         criterion, 
                         loader.train_iter, 
