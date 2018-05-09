@@ -11,11 +11,6 @@ import utils
 def get_loss(y, y_hat, criterion, do_backward = True):
     batch_size = y.size(0)
 
-    loss = criterion(y_hat.contiguous().view(-1, y_hat.size(-1)), y.contiguous().view(-1))
-    if do_backward:
-        # since size_average parameter is off, we need to devide it by batch size before back-prop.
-        loss.div(batch_size).backward()
-
     return loss
 
 def train_epoch(model, criterion, train_iter, valid_iter, config):
@@ -25,8 +20,6 @@ def train_epoch(model, criterion, train_iter, valid_iter, config):
     no_improve_cnt = 0
 
     for epoch in range(1, config.n_epochs):
-        #optimizer = optim.Adam(model.parameters(), lr = current_lr)
-        optimizer = optim.SGD(model.parameters(), lr = current_lr)
         print("current learning rate: %f" % current_lr)
         print(optimizer)
 
@@ -36,19 +29,14 @@ def train_epoch(model, criterion, train_iter, valid_iter, config):
         train_loss = np.inf
 
         for batch_index, batch in enumerate(train_iter):
-            optimizer.zero_grad()
-
             current_batch_word_cnt = torch.sum(batch.text[1])
             # Most important lines in this method.
             # Since model takes BOS + sentence as an input and sentence + EOS as an output,
             # x(input) excludes last index, and y(index) excludes first index.
-            x = batch.text[0][:, :-1]
-            y = batch.text[0][:, 1:]
+
             # feed-forward
-            y_hat = model(x)
 
             # calcuate loss and gradients with back-propagation
-            loss = get_loss(y, y_hat, criterion)
             
             # simple math to show stats
             total_loss += float(loss)
@@ -80,9 +68,8 @@ def train_epoch(model, criterion, train_iter, valid_iter, config):
 
             # Another important line in this method.
             # In orther to avoid gradient exploding, we apply gradient clipping.
-            torch_utils.clip_grad_norm_(model.parameters(), config.max_grad_norm)
+
             # Take a step of gradient descent.
-            optimizer.step()
 
             sample_cnt += batch.text[0].size(0)
             if sample_cnt >= len(train_iter.dataset.examples) * config.iter_ratio_in_epoch:
@@ -91,14 +78,10 @@ def train_epoch(model, criterion, train_iter, valid_iter, config):
         sample_cnt = 0
         total_loss, total_word_count = 0, 0
 
-        model.eval()
+        # switch mode for evaluation
+
         for batch_index, batch in enumerate(valid_iter):
             current_batch_word_cnt = torch.sum(batch.text[1])
-            x = batch.text[0][:, :-1]
-            y = batch.text[0][:, 1:]
-            y_hat = model(x)
-
-            loss = get_loss(y, y_hat, criterion, do_backward = False)
 
             total_loss += float(loss)
             total_word_count += int(current_batch_word_cnt)
@@ -118,17 +101,10 @@ def train_epoch(model, criterion, train_iter, valid_iter, config):
             current_lr /= 10.
             no_improve_cnt += 1
 
-        model.train()
+        # switch mode for training
 
         model_fn = config.model.split(".")
         model_fn = model_fn[:-1] + ["%02d" % epoch, "%.2f-%.2f" % (train_loss, np.exp(train_loss)), "%.2f-%.2f" % (avg_loss, np.exp(avg_loss))] + [model_fn[-1]]
-
-        # PyTorch provides efficient method for save and load model, which uses python pickle.
-        torch.save({"model": model.state_dict(),
-                    "config": config,
-                    "epoch": epoch + 1,
-                    "current_lr": current_lr
-                    }, ".".join(model_fn))
 
         if config.early_stop > 0 and no_improve_cnt > config.early_stop:
             break

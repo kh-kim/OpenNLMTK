@@ -54,16 +54,11 @@ if __name__ == '__main__':
                 )
 
     # Let criterion cannot count EOS as right prediction, because EOS is easy to predict.
-    loss_weight = torch.ones(len(loader.text.vocab))
-    loss_weight[data_loader.EOS] = 0
-    criterion = nn.NLLLoss(weight = loss_weight, size_average = False)
 
     print(model)
     print(criterion)
 
     if config.gpu_id >= 0:
-        model.cuda(config.gpu_id)
-        criterion.cuda(config.gpu_id)
 
     trainer.train_epoch(model, 
                         criterion, 
