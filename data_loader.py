@@ -44,7 +44,6 @@ class DataLoader():
         self.text.build_vocab(train, max_size = max_vocab)
 
 class LanguageModelDataset(data.Dataset):
-    """Defines a dataset for machine translation."""
 
     def __init__(self, path, fields, max_length=None, **kwargs):
         if not isinstance(fields[0], (tuple, list)):
