@@ -53,9 +53,9 @@ if __name__ == '__main__':
                 max_length = config.max_length
                 )
 
-    # Let criterion cannot count EOS as right prediction, because EOS is easy to predict.
+    # Let criterion cannot count PAD as right prediction, because PAD is easy to predict.
     loss_weight = torch.ones(len(loader.text.vocab))
-    loss_weight[data_loader.EOS] = 0
+    loss_weight[data_loader.PAD] = 0
     criterion = nn.NLLLoss(weight = loss_weight, size_average = False)
 
     print(model)

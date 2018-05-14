@@ -1,5 +1,6 @@
 from torchtext import data, datasets
 
+PAD = 1
 BOS = 2
 EOS = 3
 
