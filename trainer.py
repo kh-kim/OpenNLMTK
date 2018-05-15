@@ -115,7 +115,7 @@ def train_epoch(model, criterion, train_iter, valid_iter, config):
             no_improve_cnt = 0
         else:
             # decrease learing rate if there is no improvement.
-            current_lr /= 10.
+            current_lr = max(config.min_lr, current_lr / 10.)
             no_improve_cnt += 1
 
         model.train()
