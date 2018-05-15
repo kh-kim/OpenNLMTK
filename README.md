@@ -21,7 +21,13 @@ or you can refer the example shell script file to take several experiments.
 ## Evaluation:
 
 Below is a list of model files from the training. These filenames contain experiment setting, epochs, training loss, training PPL, validation loss and validation PPL.
-We can figure out that this simple RNNLM (using LSTM) architecture is much better than n-gram in Appendix.
+We can figure out that this simple RNNLM (using LSTM) architecture is much better than n-gram in Appendix. I strongly believe that hyper-parameter tuning would improve performance of this language model, also. 
+
+You may need to try it. :)
+
+- joongang_daily corpus PPL: 369.34
+- TED corpus PPL: 303.35
+- joongang_daily + TED corpus PPL: 303.87
 
 ```
 -rw-rw-r-- 1 khkim khkim  70M  5월 15 10:31 en.sgd.iter-.1.01.6.03-416.14.6.08-436.64.pth
@@ -131,6 +137,7 @@ We can figure out that this simple RNNLM (using LSTM) architecture is much bette
 
 Below is evaluation results from n-gram language modeling with same training data and test data.
 
+joongang_daily corpus PPL: 510.9258
 ```
 $ time ngram-count -order 3 -kndiscount -text ./data/joongang_daily.aligned.en.refined.tok.bpe.txt -lm ./data/joongang_daily.aligned.en.refined.tok.bpe.lm -write-vocab ./data/joongang_daily.aligned.en.refined.tok.bpe.vocab.txt -debug 2
 $ ngram -ppl ./data/test.refined.tok.bpe.txt -lm ./data/joongang_daily.aligned.en.refined.tok.bpe.lm -order 3 -debug 2
@@ -138,6 +145,7 @@ $ ngram -ppl ./data/test.refined.tok.bpe.txt -lm ./data/joongang_daily.aligned.e
 file ./data/test.refined.tok.bpe.txt: 1000 sentences, 13302 words, 44 OOVs 0 zeroprobs, logprob= -38615.77 ppl= 510.9258 ppl1= 817.7845
 ```
 
+TED corpus PPL: 374.1577
 ```
 $ time ngram-count -order 3 -kndiscount -text ./data/ted.aligned.en.refined.tok.bpe.txt -lm ./data/ted.aligned.en.refined.tok.bpe.lm -write-vocab ./data/ted.agliend.en.refined.tok.bpe.vocab.txt -debug 2
 $ ngram -ppl ./data/test.refined.tok.bpe.txt -lm ./data/ted.aligned.en.refined.tok.bpe.lm -order 3 -debug 2
@@ -145,6 +153,7 @@ $ ngram -ppl ./data/test.refined.tok.bpe.txt -lm ./data/ted.aligned.en.refined.t
 file ./data/test.refined.tok.bpe.txt: 1000 sentences, 13302 words, 32 OOVs 0 zeroprobs, logprob= -36717.49 ppl= 374.1577 ppl1= 584.7292
 ```
 
+joongang_daily(0.5) + TED(0.5) corpus PPL: 328.6022
 ```
 $ ngram -lm ./data/joongang_daily.aligned.en.refined.tok.bpe.lm -mix-lm ./data/ted.aligned.en.refined.tok.bpe.lm -lambda .5 -write-lm ./data/joongang_daily_ted.aligned.en.refined.tok.bpe.lm -debug 2
 $ ngram -ppl ./data/test.refined.tok.bpe.txt -lm ./data/joongang_daily_ted.aligned.en.refined.tok.bpe.lm -order 3 -debug 2
