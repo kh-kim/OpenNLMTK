@@ -6,7 +6,17 @@ EOS = 3
 
 class DataLoader():
 
-    def __init__(self, train_fn, valid_fn, batch_size = 64, device = -1, max_vocab = 99999999, max_length = 255, fix_length = None, use_bos = True, use_eos = True, shuffle = True):
+    def __init__(self, train_fn, valid_fn, 
+                                    batch_size = 64, 
+                                    device = 'cpu', 
+                                    max_vocab = 99999999, 
+                                    max_length = 255, 
+                                    fix_length = None, 
+                                    use_bos = True, 
+                                    use_eos = True, 
+                                    shuffle = True
+                                    ):
+        
         super(DataLoader, self).__init__()
 
         self.text = data.Field(sequential = True, 
@@ -29,14 +39,14 @@ class DataLoader():
 
         self.train_iter = data.BucketIterator(train, 
                                                 batch_size = batch_size, 
-                                                device = device, 
+                                                device = 'cuda:%d' % device if device >= 0 else 'cpu', 
                                                 shuffle = shuffle, 
                                                 sort_key=lambda x: -len(x.text), 
                                                 sort_within_batch = True
                                                 )
         self.valid_iter = data.BucketIterator(valid, 
                                                 batch_size = batch_size, 
-                                                device = device, 
+                                                device = 'cuda:%d' % device if device >= 0 else 'cpu', 
                                                 shuffle = False, 
                                                 sort_key=lambda x: -len(x.text), 
                                                 sort_within_batch = True
@@ -46,7 +56,14 @@ class DataLoader():
 
 class TextClassificationDataLoader():
 
-    def __init__(self, train_fn, valid_fn, tokenizer, batch_size = 64, device = -1, max_vocab = 9999999, fix_length = None, use_eos = False, shuffle = True):
+    def __init__(self, train_fn, valid_fn, tokenizer, 
+                                            batch_size = 64, 
+                                            device = 'cpu', 
+                                            max_vocab = 9999999, 
+                                            fix_length = None, 
+                                            use_eos = False, 
+                                            shuffle = True):
+        
         super(TextClassificationDataLoader, self).__init__()
 
         self.label = data.Field(sequential = False, use_vocab = False)
@@ -67,7 +84,7 @@ class TextClassificationDataLoader():
 
         self.train_iter, self.valid_iter = data.BucketIterator.splits((train, valid), 
                                                                         batch_size = batch_size, 
-                                                                        device = device, 
+                                                                        device = 'cuda:%d' % device if device >= 0 else 'cpu', 
                                                                         shuffle = shuffle
                                                                         )
         
