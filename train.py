@@ -22,7 +22,7 @@ def define_argparser():
     p.add_argument('-early_stop', type = int, default = 3)
     p.add_argument('-iter_ratio_in_epoch', type = float, default = 1.)
     
-    p.add_argument('-dropout', type = float, default = .1)
+    p.add_argument('-dropout', type = float, default = .3)
     p.add_argument('-word_vec_dim', type = int, default = 256)
     p.add_argument('-hidden_size', type = int, default = 256)
     p.add_argument('-max_length', type = int, default = 80)
@@ -31,10 +31,31 @@ def define_argparser():
     p.add_argument('-max_grad_norm', type = float, default = 5.)
     p.add_argument('-lr', type = float, default = 1.)
     p.add_argument('-min_lr', type = float, default = .000001)
+
+    p.add_argument('-gen', type = int, default = 32)
     
     config = p.parse_args()
 
     return config
+
+def to_text(indice, vocab):
+    lines = []
+
+    for i in range(len(indice)):
+        line = []
+        for j in range(len(indice[i])):
+            index = indice[i][j]
+
+            if index == data_loader.EOS:
+                #line += ['<EOS>']
+                break
+            else:
+                line += [vocab.itos[index]]
+
+        line = ' '.join(line)
+        lines += [line]
+
+    return lines
 
 if __name__ == '__main__':
     config = define_argparser()
@@ -65,9 +86,20 @@ if __name__ == '__main__':
         model.cuda(config.gpu_id)
         criterion.cuda(config.gpu_id)
 
-    trainer.train_epoch(model, 
-                        criterion, 
-                        loader.train_iter, 
-                        loader.valid_iter, 
-                        config
-                        )
+    if config.n_epochs > 0:
+        trainer.train_epoch(model, 
+                            criterion, 
+                            loader.train_iter, 
+                            loader.valid_iter, 
+                            config
+                            )
+
+    if config.gen > 0:
+        total_gen = 0
+        while total_gen < config.gen:
+            current_gen = min(config.batch_size, config.gen - total_gen)
+            _, indice = model.search(batch_size = current_gen)
+            total_gen += current_gen
+
+            lines = to_text(indice, loader.text.vocab)
+            print('\n'.join(lines))

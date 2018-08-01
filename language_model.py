@@ -31,3 +31,37 @@ class LanguageModel(nn.Module):
         y_hat = self.log_softmax(x)
 
         return y_hat
+
+    def search(self, batch_size = 64, max_length = 255):
+        x = torch.LongTensor(batch_size, 1).to(next(self.parameters()).device).zero_() + data_loader.BOS
+        # |x| = (batch_size, 1)
+        is_undone = x.new_ones(batch_size, 1).float()
+
+        y_hats, indice = [], []
+        h, c = None, None
+        while is_undone.sum() > 0 and len(indice) < max_length:
+            x = self.emb(x)
+            # |emb_t| = (batch_size, 1, word_vec_dim)
+
+            x, (h, c) = self.rnn(x, (h, c)) if h is not None and c is not None else self.rnn(x)
+            # |x| = (batch_size, 1, hidden_size)
+            y_hat = self.log_softmax(x)
+            # |y_hat| = (batch_size, 1, output_size)
+            y_hats += [y_hat]
+
+            #y = torch.topk(y_hat, 1, dim = -1)[1].squeeze(-1)
+            y = torch.multinomial(y_hat.exp().view(batch_size, -1), 1)
+            y = y.masked_fill_((1. - is_undone).byte(), data_loader.PAD)
+            is_undone = is_undone * torch.ne(y, data_loader.EOS).float()            
+            # |y| = (batch_size, 1)
+            # |is_undone| = (batch_size, 1)
+            indice += [y]
+
+            x = y
+
+        y_hats = torch.cat(y_hats, dim = 1)
+        indice = torch.cat(indice, dim = -1)
+        # |y_hat| = (batch_size, length, output_size)
+        # |indice| = (batch_size, length)
+
+        return y_hats, indice

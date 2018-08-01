@@ -24,7 +24,7 @@ def train_epoch(model, criterion, train_iter, valid_iter, config):
     lowest_valid_loss = np.inf
     no_improve_cnt = 0
 
-    for epoch in range(1, config.n_epochs):
+    for epoch in range(1, config.n_epochs + 1):
         #optimizer = optim.Adam(model.parameters(), lr = current_lr)
         optimizer = optim.SGD(model.parameters(), lr = current_lr)
         print("current learning rate: %f" % current_lr)
@@ -130,5 +130,5 @@ def train_epoch(model, criterion, train_iter, valid_iter, config):
                     "current_lr": current_lr
                     }, ".".join(model_fn))
 
-        if config.early_stop > 0 and no_improve_cnt > config.early_stop:
+        if config.early_stop > 0 and no_improve_cnt >= config.early_stop:
             break
