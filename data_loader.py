@@ -1,95 +1,60 @@
 from torchtext import data, datasets
 
-PAD = 1
-BOS = 2
-EOS = 3
+PAD, BOS, EOS = 1, 2, 3
+
 
 class DataLoader():
 
-    def __init__(self, train_fn, valid_fn, 
-                                    batch_size = 64, 
-                                    device = 'cpu', 
-                                    max_vocab = 99999999, 
-                                    max_length = 255, 
-                                    fix_length = None, 
-                                    use_bos = True, 
-                                    use_eos = True, 
-                                    shuffle = True
-                                    ):
+    def __init__(self, 
+                 train_fn,
+                 valid_fn, 
+                 batch_size=64, 
+                 device='cpu', 
+                 max_vocab=99999999, 
+                 max_length=255, 
+                 fix_length=None, 
+                 use_bos=True, 
+                 use_eos=True, 
+                 shuffle=True
+                 ):
         
         super(DataLoader, self).__init__()
 
-        self.text = data.Field(sequential = True, 
-                                use_vocab = True, 
-                                batch_first = True, 
-                                include_lengths = True, 
-                                fix_length = fix_length, 
-                                init_token = '<BOS>' if use_bos else None, 
-                                eos_token = '<EOS>' if use_eos else None
-                                )
+        self.text = data.Field(sequential=True, 
+                               use_vocab=True, 
+                               batch_first=True, 
+                               include_lengths=True, 
+                               fix_length=fix_length, 
+                               init_token='<BOS>' if use_bos else None, 
+                               eos_token='<EOS>' if use_eos else None
+                               )
 
-        train = LanguageModelDataset(path = train_fn, 
-                                        fields = [('text', self.text)], 
-                                        max_length = max_length
-                                        )
-        valid = LanguageModelDataset(path = valid_fn, 
-                                        fields = [('text', self.text)], 
-                                        max_length = max_length
-                                        )
+        train = LanguageModelDataset(path=train_fn, 
+                                     fields=[('text', self.text)], 
+                                     max_length=max_length
+                                     )
+        valid = LanguageModelDataset(path=valid_fn, 
+                                     fields=[('text', self.text)], 
+                                     max_length=max_length
+                                     )
 
         self.train_iter = data.BucketIterator(train, 
-                                                batch_size = batch_size, 
-                                                device = 'cuda:%d' % device if device >= 0 else 'cpu', 
-                                                shuffle = shuffle, 
-                                                sort_key=lambda x: -len(x.text), 
-                                                sort_within_batch = True
-                                                )
+                                              batch_size=batch_size, 
+                                              device='cuda:%d' % device if device >= 0 else 'cpu', 
+                                              shuffle=shuffle, 
+                                              sort_key=lambda x: -len(x.text), 
+                                              sort_within_batch=True
+                                              )
         self.valid_iter = data.BucketIterator(valid, 
-                                                batch_size = batch_size, 
-                                                device = 'cuda:%d' % device if device >= 0 else 'cpu', 
-                                                shuffle = False, 
-                                                sort_key=lambda x: -len(x.text), 
-                                                sort_within_batch = True
-                                                )
+                                              batch_size=batch_size, 
+                                              device='cuda:%d' % device if device >= 0 else 'cpu', 
+                                              shuffle=False, 
+                                              sort_key=lambda x: -len(x.text), 
+                                              sort_within_batch=True
+                                              )
 
-        self.text.build_vocab(train, max_size = max_vocab)
+        self.text.build_vocab(train, max_size=max_vocab)
 
-class TextClassificationDataLoader():
-
-    def __init__(self, train_fn, valid_fn, tokenizer, 
-                                            batch_size = 64, 
-                                            device = 'cpu', 
-                                            max_vocab = 9999999, 
-                                            fix_length = None, 
-                                            use_eos = False, 
-                                            shuffle = True):
-        
-        super(TextClassificationDataLoader, self).__init__()
-
-        self.label = data.Field(sequential = False, use_vocab = False)
-        self.text = data.Field(tokenize = tokenizer, 
-                                use_vocab = True, 
-                                batch_first = True, 
-                                include_lengths = True, 
-                                fix_length = fix_length, 
-                                eos_token = '<EOS>' if use_eos else None
-                                )
-
-        train, valid = data.TabularDataset.splits(path = '', 
-                                                    train = train_fn, 
-                                                    validation = valid_fn, 
-                                                    format = 'tsv', 
-                                                    fields = [('label', self.label), ('text', self.text)]
-                                                    )
-
-        self.train_iter, self.valid_iter = data.BucketIterator.splits((train, valid), 
-                                                                        batch_size = batch_size, 
-                                                                        device = 'cuda:%d' % device if device >= 0 else 'cpu', 
-                                                                        shuffle = shuffle
-                                                                        )
-        
-        self.label.build_vocab(train)
-        self.text.build_vocab(train, max_size = max_vocab)
 
 class LanguageModelDataset(data.Dataset):
 

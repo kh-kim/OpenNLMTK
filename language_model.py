@@ -3,9 +3,17 @@ import torch.nn as nn
 
 import data_loader
 
+
 class LanguageModel(nn.Module):
 
-    def __init__(self, vocab_size, word_vec_dim = 512, hidden_size = 512, n_layers = 4, dropout_p = .2, max_length = 255):
+    def __init__(self, 
+                 vocab_size,
+                 word_vec_dim=512,
+                 hidden_size=512,
+                 n_layers=4,
+                 dropout_p=.2,
+                 max_length=255
+                 ):
         self.vocab_size = vocab_size
         self.word_vec_dim = word_vec_dim
         self.hidden_size = hidden_size
@@ -15,10 +23,18 @@ class LanguageModel(nn.Module):
 
         super(LanguageModel, self).__init__()
 
-        self.emb = nn.Embedding(vocab_size, word_vec_dim, padding_idx = data_loader.PAD)
-        self.rnn = nn.LSTM(word_vec_dim, hidden_size, n_layers, batch_first = True, dropout = dropout_p)
-        self.out = nn.Linear(hidden_size, vocab_size, bias = True)
-        self.log_softmax = nn.LogSoftmax(dim = 2)
+        self.emb = nn.Embedding(vocab_size, 
+                                word_vec_dim,
+                                padding_idx=data_loader.PAD
+                                )
+        self.rnn = nn.LSTM(word_vec_dim,
+                           hidden_size,
+                           n_layers,
+                           batch_first=True,
+                           dropout=dropout_p
+                           )
+        self.out = nn.Linear(hidden_size, vocab_size, bias=True)
+        self.log_softmax = nn.LogSoftmax(dim=2)
 
     def forward(self, x):
         # |x| = (batch_size, length)
@@ -32,7 +48,7 @@ class LanguageModel(nn.Module):
 
         return y_hat
 
-    def search(self, batch_size = 64, max_length = 255):
+    def search(self, batch_size=64, max_length=255):
         x = torch.LongTensor(batch_size, 1).to(next(self.parameters()).device).zero_() + data_loader.BOS
         # |x| = (batch_size, 1)
         is_undone = x.new_ones(batch_size, 1).float()
@@ -49,7 +65,7 @@ class LanguageModel(nn.Module):
             # |y_hat| = (batch_size, 1, output_size)
             y_hats += [y_hat]
 
-            #y = torch.topk(y_hat, 1, dim = -1)[1].squeeze(-1)
+            # y = torch.topk(y_hat, 1, dim = -1)[1].squeeze(-1)
             y = torch.multinomial(y_hat.exp().view(batch_size, -1), 1)
             y = y.masked_fill_((1. - is_undone).byte(), data_loader.PAD)
             is_undone = is_undone * torch.ne(y, data_loader.EOS).float()            
@@ -59,8 +75,8 @@ class LanguageModel(nn.Module):
 
             x = y
 
-        y_hats = torch.cat(y_hats, dim = 1)
-        indice = torch.cat(indice, dim = -1)
+        y_hats = torch.cat(y_hats, dim=1)
+        indice = torch.cat(indice, dim=-1)
         # |y_hat| = (batch_size, length, output_size)
         # |indice| = (batch_size, length)
 
